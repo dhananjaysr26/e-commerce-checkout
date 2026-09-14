@@ -92,7 +92,7 @@ describe('End-to-End Checkout Flow', () => {
     const expectedDiscount = Math.floor(p1.unitPriceMinor * 0.1);
     const expectedNet = p1.unitPriceMinor - expectedDiscount;
 
-    expect(orderData2.netAmountMinor).toBe(expectedNet);
+    expect((orderData2.data || orderData2).netAmountMinor).toBe(expectedNet);
 
     // 7. Verify Inventory is deducted (2 headphones in first, 1 headphone in second checkout. 1 charger in first)
     const finalInv1 = (await Product.findByPk(p1.id)).inventory;

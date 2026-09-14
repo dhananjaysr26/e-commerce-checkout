@@ -59,4 +59,5 @@ export const api = {
       },
       body: JSON.stringify({ paymentMethodId, couponCode }),
     }),
+  getCoupons: () => fetchApi('/me/coupons'),
 };

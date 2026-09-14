@@ -13,7 +13,7 @@ describe('CheckoutService', () => {
       rollback: vi.fn(),
     };
     vi.spyOn(models.sequelize, 'transaction').mockResolvedValue(mockTransaction);
-    vi.spyOn(models.sequelize, 'query').mockResolvedValue([ [null, 1] ]); // default
+    vi.spyOn(models.sequelize, 'query').mockResolvedValue([ [{ successful_order_count: 5 }], { rowCount: 1 } ]); // default
 
     vi.spyOn(models.IdempotencyKey, 'findOne');
     vi.spyOn(models.IdempotencyKey, 'create');
@@ -25,6 +25,7 @@ describe('CheckoutService', () => {
     vi.spyOn(models.Order, 'create');
     vi.spyOn(models.Order, 'findByPk');
     vi.spyOn(models.OrderItem, 'bulkCreate');
+    vi.spyOn(models.Coupon, 'create').mockResolvedValue({});
   });
 
   describe('processCheckout', () => {

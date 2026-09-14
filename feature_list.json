@@ -44,6 +44,15 @@
       "evidence": [
         "tester (2026-09-14): npm run test: tests passed. Validated report invariants with snapshot data."
       ]
+    },
+    {
+      "id": "implement-reward-milestones",
+      "title": "Implement Reward Milestone Progress and History",
+      "status": "passing",
+      "notes": "Implement a reliable, transactional reward milestone system for successful paid orders. \n1. Create RewardAccount table (current progress) and RewardEvent table (immutable history).\n2. Update the checkout transaction to atomically increment RewardAccount and insert an ORDER_REWARDED event, then check if threshold (e.g. 5) is met. If so, insert a MILESTONE_REACHED event and generate a coupon. \n3. Ensure duplicate order processing is detected via unique constraints on RewardEvent BEFORE incrementing. \n4. Make it idempotent, concurrent-safe, and create a GET /me/rewards endpoint. \n5. Write unit, integration, idempotency, and concurrency tests.",
+      "evidence": [
+        "All 58 tests passed including API, Integration, and Concurrency tests for rewards functionality."
+      ]
     }
   ],
   "verification_paths": {

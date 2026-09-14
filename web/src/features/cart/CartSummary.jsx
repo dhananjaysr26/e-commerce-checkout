@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCartItemCount, selectCartSubtotal, selectCart, checkoutCart } from './cartSlice';
 import { formatMoney } from '../../utils/money';
+import { api } from '../../app/api';
 
 const CartSummary = () => {
   const dispatch = useDispatch();
@@ -13,6 +14,14 @@ const CartSummary = () => {
   const lastOrder = useSelector((state) => state.cart.lastOrder);
 
   const [couponCode, setCouponCode] = useState('');
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+
+  useEffect(() => {
+    // Fetch available coupons
+    api.getCoupons()
+      .then(coupons => setAvailableCoupons(coupons))
+      .catch(err => console.error('Failed to fetch coupons', err));
+  }, []);
 
   if (itemCount === 0 && !lastOrder) return null;
 
@@ -53,6 +62,23 @@ const CartSummary = () => {
           onChange={(e) => setCouponCode(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         />
+        {availableCoupons.length > 0 && (
+          <div className="mt-2">
+            <p className="text-xs font-medium text-gray-700 mb-1">Available Coupons:</p>
+            <div className="space-y-1">
+              {availableCoupons.map(coupon => (
+                <div 
+                  key={coupon.id} 
+                  onClick={() => setCouponCode(coupon.code)}
+                  className="text-xs flex justify-between items-center p-2 bg-indigo-50 border border-indigo-100 rounded cursor-pointer hover:bg-indigo-100 transition-colors"
+                >
+                  <span className="font-mono font-medium text-indigo-700">{coupon.code}</span>
+                  <span className="text-indigo-600">{coupon.discountValue}% off</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {checkoutError && (

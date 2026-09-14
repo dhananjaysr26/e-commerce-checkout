@@ -41,13 +41,13 @@ describe('Idempotency API', () => {
     const res1 = await checkoutHandler(checkoutEvent);
     expect(res1.statusCode).toBe(201);
     const body1 = JSON.parse(res1.body);
-    const orderId1 = body1.orderId;
+    const orderId1 = body1.data ? body1.data.orderId : body1.orderId;
 
     // 4. Second identical checkout request (simulate retry)
     const res2 = await checkoutHandler(checkoutEvent);
     expect(res2.statusCode).toBe(201);
     const body2 = JSON.parse(res2.body);
-    const orderId2 = body2.orderId;
+    const orderId2 = body2.data ? body2.data.orderId : body2.orderId;
 
     expect(orderId1).toBeDefined();
     expect(orderId1).toBe(orderId2); // Should return same order without duplicating

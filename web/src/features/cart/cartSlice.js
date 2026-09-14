@@ -23,6 +23,28 @@ export const addToCart = createAsyncThunk(
   }
 );
 
+export const updateCartItem = createAsyncThunk(
+  'cart/updateCartItem',
+  async ({ cartId, productId, quantity }, { rejectWithValue }) => {
+    try {
+      return await api.updateCartItem(cartId, productId, quantity);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const removeCartItem = createAsyncThunk(
+  'cart/removeCartItem',
+  async ({ cartId, productId }, { rejectWithValue }) => {
+    try {
+      return await api.removeCartItem(cartId, productId);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const checkoutCart = createAsyncThunk(
   'cart/checkoutCart',
   async ({ cartId, paymentMethodId, couponCode }, { rejectWithValue }) => {
@@ -76,6 +98,12 @@ const cartSlice = createSlice({
       .addCase(addToCart.rejected, (state, action) => {
         state.addStatus = 'failed';
         state.error = action.payload;
+      })
+      .addCase(updateCartItem.fulfilled, (state, action) => {
+        state.cart = action.payload;
+      })
+      .addCase(removeCartItem.fulfilled, (state, action) => {
+        state.cart = action.payload;
       })
       .addCase(checkoutCart.pending, (state) => {
         state.checkoutStatus = 'loading';

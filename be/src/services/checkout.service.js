@@ -1,6 +1,7 @@
-const { sequelize, Cart, CartItem, Product, Order, OrderItem, Coupon, IdempotencyKey, User } = require('../models');
+const { sequelize, Cart, CartItem, Product, Order, OrderItem, Coupon, IdempotencyKey, User, RewardAccount, RewardEvent } = require('../models');
 const AppError = require('../errors/AppError');
 const errorCodes = require('../errors/errorCodes');
+const crypto = require('crypto');
 
 class CheckoutService {
   async processCheckout(userId, cartId, paymentMethodId, couponCode, idempotencyKey, requestHash) {
@@ -105,10 +106,12 @@ class CheckoutService {
         const [updatedCoupons] = await sequelize.query(`
           UPDATE coupons
           SET status = 'redeemed', redeemed_at = NOW()
-          WHERE code = :code AND status = 'available'
+          WHERE code = :code 
+            AND status = 'available' 
+            AND (user_id IS NULL OR user_id = :userId)
           RETURNING id, discount_type, discount_value
         `, {
-          replacements: { code: couponCode },
+          replacements: { code: couponCode, userId },
           transaction: t,
         });
 
@@ -172,6 +175,61 @@ class CheckoutService {
         { status: 'completed', orderId: order.id },
         { where: { userId, key: idempotencyKey }, transaction: t }
       );
+
+      // 9. Process Rewards
+      const [rewardEventResult, meta] = await sequelize.query(`
+        INSERT INTO reward_events (id, user_id, order_id, event_type, created_at, updated_at)
+        VALUES (:id, :userId, :orderId, 'ORDER_REWARDED', NOW(), NOW())
+        ON CONFLICT (user_id, order_id, event_type) DO NOTHING
+        RETURNING id
+      `, {
+        replacements: { id: crypto.randomUUID(), userId, orderId: order.id },
+        transaction: t
+      });
+
+      if (rewardEventResult && rewardEventResult.length > 0) {
+        // Atomic increment of successful_order_count
+        const [accountResults] = await sequelize.query(`
+          INSERT INTO reward_accounts (id, user_id, successful_order_count, created_at, updated_at)
+          VALUES (:accountId, :userId, 1, NOW(), NOW())
+          ON CONFLICT (user_id) 
+          DO UPDATE SET 
+            successful_order_count = reward_accounts.successful_order_count + 1,
+            updated_at = NOW()
+          RETURNING successful_order_count
+        `, {
+          replacements: { accountId: crypto.randomUUID(), userId },
+          transaction: t
+        });
+
+        const newCount = accountResults[0].successful_order_count;
+        const threshold = parseInt(process.env.REWARD_ORDER_THRESHOLD || '5', 10);
+
+        if (newCount > 0 && newCount % threshold === 0) {
+          // Milestone reached
+          await sequelize.query(`
+            INSERT INTO reward_events (id, user_id, order_id, event_type, milestone, created_at, updated_at)
+            VALUES (:id, :userId, :orderId, 'MILESTONE_REACHED', :milestone, NOW(), NOW())
+            ON CONFLICT (user_id, order_id, event_type) DO NOTHING
+          `, {
+            replacements: { id: crypto.randomUUID(), userId, orderId: order.id, milestone: newCount },
+            transaction: t
+          });
+
+          // Generate coupon
+          const code = `REWARD-${userId.substring(0, 8).toUpperCase()}-${newCount}-${crypto.randomUUID().substring(0, 4).toUpperCase()}`;
+          await Coupon.create({
+            code,
+            userId,
+            discountType: 'percentage',
+            discountValue: 10,
+            status: 'available',
+            isActive: true,
+            maxUses: 1,
+            currentUses: 0
+          }, { transaction: t });
+        }
+      }
 
       await t.commit();
       return order;

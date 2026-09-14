@@ -86,3 +86,6 @@
 - Full automated test suite (unit, integration, concurrency simulations).
 - Setting up a CI/CD pipeline.
 - Implementing a realistic mock payment gateway abstraction.
+## Reward Milestone Progress and History
+- **Database Atomicity:** Used `INSERT ... ON CONFLICT DO NOTHING RETURNING id` in `RewardEvent` to deduplicate order reward events. Only if a row is returned (i.e. successfully inserted), `RewardAccount.successful_order_count` is incremented.
+- **Milestone Coupons:** Users automatically receive a milestone coupon code embedded with their user ID and the current threshold (e.g. `REWARD-<USER_ID>-5-<RANDOM>`). Instead of modifying the unique `milestone` constraint in `coupons`, the milestone integer is stored as `NULL` on the coupon row for user milestones, relying solely on the coupon code string format to identify it.

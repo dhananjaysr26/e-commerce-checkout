@@ -10,6 +10,8 @@ const Order = require('./Order')(sequelize, DataTypes);
 const OrderItem = require('./OrderItem')(sequelize, DataTypes);
 const Coupon = require('./Coupon')(sequelize, DataTypes);
 const IdempotencyKey = require('./IdempotencyKey')(sequelize, DataTypes);
+const RewardAccount = require('./RewardAccount')(sequelize, DataTypes);
+const RewardEvent = require('./RewardEvent')(sequelize, DataTypes);
 
 // ── Associations ──
 
@@ -55,6 +57,20 @@ IdempotencyKey.belongsTo(Cart, { foreignKey: 'cartId' });
 Order.hasMany(IdempotencyKey, { foreignKey: 'orderId' });
 IdempotencyKey.belongsTo(Order, { foreignKey: 'orderId' });
 
+// RewardAccount associations
+User.hasOne(RewardAccount, { foreignKey: 'userId' });
+RewardAccount.belongsTo(User, { foreignKey: 'userId' });
+
+// Coupon -> User
+User.hasMany(Coupon, { foreignKey: 'userId' });
+Coupon.belongsTo(User, { foreignKey: 'userId' });
+
+// RewardEvent associations
+User.hasMany(RewardEvent, { foreignKey: 'userId' });
+RewardEvent.belongsTo(User, { foreignKey: 'userId' });
+Order.hasMany(RewardEvent, { foreignKey: 'orderId' });
+RewardEvent.belongsTo(Order, { foreignKey: 'orderId' });
+
 module.exports = {
   sequelize,
   User,
@@ -65,4 +81,6 @@ module.exports = {
   OrderItem,
   Coupon,
   IdempotencyKey,
+  RewardAccount,
+  RewardEvent,
 };

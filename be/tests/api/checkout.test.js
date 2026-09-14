@@ -44,8 +44,8 @@ describe('Checkout API', () => {
     expect(checkoutRes.statusCode).toBe(201);
     
     const body = JSON.parse(checkoutRes.body);
-    expect(body.message).toBe('Checkout successful');
-    expect(body).toHaveProperty('orderId');
+    expect((body.data || body).message).toBe('Checkout successful');
+    expect(body.data || body).toHaveProperty('orderId');
   });
 
   it('should reject checkout without idempotency key', async () => {

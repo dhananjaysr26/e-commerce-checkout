@@ -83,6 +83,18 @@ functions:
       - httpApi:
           path: /admin/report
           method: get
+  getRewards:
+    handler: src/handlers/rewards/rewards.getRewards
+    events:
+      - httpApi:
+          path: /me/rewards
+          method: get
+  getCoupons:
+    handler: src/handlers/rewards/rewards.getCoupons
+    events:
+      - httpApi:
+          path: /me/coupons
+          method: get
 
 plugins:
   - serverless-offline
