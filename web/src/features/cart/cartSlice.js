@@ -23,6 +23,18 @@ export const addToCart = createAsyncThunk(
   }
 );
 
+export const checkoutCart = createAsyncThunk(
+  'cart/checkoutCart',
+  async ({ cartId, paymentMethodId, couponCode }, { rejectWithValue }) => {
+    try {
+      const idempotencyKey = window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+      return await api.checkoutCart(cartId, paymentMethodId, couponCode, idempotencyKey);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
@@ -30,8 +42,17 @@ const cartSlice = createSlice({
     status: 'idle',
     error: null,
     addStatus: 'idle',
+    checkoutStatus: 'idle',
+    checkoutError: null,
+    lastOrder: null,
   },
-  reducers: {},
+  reducers: {
+    resetCheckoutStatus(state) {
+      state.checkoutStatus = 'idle';
+      state.checkoutError = null;
+      state.lastOrder = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchActiveCart.pending, (state) => {
@@ -55,9 +76,24 @@ const cartSlice = createSlice({
       .addCase(addToCart.rejected, (state, action) => {
         state.addStatus = 'failed';
         state.error = action.payload;
+      })
+      .addCase(checkoutCart.pending, (state) => {
+        state.checkoutStatus = 'loading';
+        state.checkoutError = null;
+      })
+      .addCase(checkoutCart.fulfilled, (state, action) => {
+        state.checkoutStatus = 'succeeded';
+        state.lastOrder = action.payload;
+        state.cart = null; // Cart is converted
+      })
+      .addCase(checkoutCart.rejected, (state, action) => {
+        state.checkoutStatus = 'failed';
+        state.checkoutError = action.payload;
       });
   },
 });
+
+export const { resetCheckoutStatus } = cartSlice.actions;
 
 export default cartSlice.reducer;
 

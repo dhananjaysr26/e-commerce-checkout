@@ -24,6 +24,20 @@ class CheckoutService {
     const t = await sequelize.transaction();
 
     try {
+      // 3. Fetch Cart First to avoid deadlock on foreign key locks (IdempotencyKey -> Cart)
+      const cart = await Cart.findOne({
+        where: { id: cartId, userId },
+        transaction: t,
+        lock: t.LOCK.UPDATE
+      });
+
+      if (!cart) {
+        throw new AppError('Cart not found', 404, errorCodes.NOT_FOUND);
+      }
+      if (cart.status !== 'open') {
+        throw new AppError('Cart is already checked out', 409, 'CART_ALREADY_CHECKED_OUT');
+      }
+
       // 2. Insert/Update Idempotency Record (starts processing)
       if (!existing) {
         try {
@@ -38,20 +52,6 @@ class CheckoutService {
         }
       } else if (existing.status === 'failed') {
         await existing.update({ status: 'started', cartId, requestHash }, { transaction: t });
-      }
-
-      // 3. Fetch Cart
-      const cart = await Cart.findOne({
-        where: { id: cartId, userId },
-        transaction: t,
-        lock: t.LOCK.UPDATE
-      });
-
-      if (!cart) {
-        throw new AppError('Cart not found', 404, errorCodes.NOT_FOUND);
-      }
-      if (cart.status !== 'open') {
-        throw new AppError('Cart is already checked out', 409, 'CART_ALREADY_CHECKED_OUT');
       }
 
       const cartItems = await CartItem.findAll({

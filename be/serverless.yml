@@ -13,7 +13,20 @@ provider:
     JWT_SECRET: ${env:JWT_SECRET, 'supersecret'}
 
   httpApi:
-    cors: true
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - x-idempotency-key
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
 
 functions:
   checkout:

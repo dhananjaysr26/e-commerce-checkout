@@ -4,6 +4,11 @@ const { sequelize } = require('../../src/models');
 const jwt = require('jsonwebtoken');
 
 describe('Carts API', () => {
+  beforeAll(async () => {
+    const { execSync } = require('child_process');
+    execSync('npm run db:reset', { stdio: 'ignore' });
+  });
+
   afterAll(async () => {
     await sequelize.close();
   });

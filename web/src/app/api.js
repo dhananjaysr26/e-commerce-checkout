@@ -42,4 +42,21 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ productId, quantity }),
     }),
+  updateCartItem: (cartId, productId, quantity) => 
+    fetchApi(`/carts/${cartId}/items/${productId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ quantity }),
+    }),
+  removeCartItem: (cartId, productId) => 
+    fetchApi(`/carts/${cartId}/items/${productId}`, {
+      method: 'DELETE',
+    }),
+  checkoutCart: (cartId, paymentMethodId, couponCode, idempotencyKey) => 
+    fetchApi(`/carts/${cartId}/checkout`, {
+      method: 'POST',
+      headers: {
+        'x-idempotency-key': idempotencyKey,
+      },
+      body: JSON.stringify({ paymentMethodId, couponCode }),
+    }),
 };

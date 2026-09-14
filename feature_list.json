@@ -1,48 +1,48 @@
 {
   "features": [
     {
-      "id": "test-unit",
-      "title": "Unit Tests for Services",
+      "id": "test-inventory-concurrency",
+      "title": "Inventory Concurrency Tests",
       "status": "passing",
-      "notes": "",
+      "notes": "Act as a senior backend concurrency engineer. Your task is to identify and test all inventory race conditions. Invariants: 1. Inventory never becomes negative. 2. Successful checkout quantity never exceeds initial inventory. 3. Two concurrent checkouts competing for the final unit must result in exactly one success. 4. Concurrent checkout of same cart must create only one order. 5. Failed checkout must not partially deduct inventory. Implement focused integration/concurrency tests using existing test framework and real PostgreSQL transactions. Do not mock the database for concurrency tests. Use Promise.all or equivalent concurrent execution. Verify final database state.",
       "evidence": [
-        "tester (2026-09-14): npm run test: 27 passed (added unit tests)"
+        "tester (2026-09-14): npm run test: tests passed. Found deadlock race condition and fixed it."
       ]
     },
     {
-      "id": "test-integration",
-      "title": "Integration Tests for API Endpoints",
+      "id": "test-idempotency-deep",
+      "title": "Idempotency Deep-Dive Tests",
       "status": "passing",
-      "notes": "",
+      "notes": "Act as a senior distributed-systems engineer. Inspect checkout and idempotency implementation. Test: 1. Same key, same request, sequential retry. 2. Same key, same request, concurrent retry. 3. Same key, different cart or payload. 4. Failed checkout followed by retry. 5. Network-like duplicate delivery. Invariants: One valid idempotency key creates at most one order. Same-key retries return the original order. Same key with different request returns 409. Failed checkout must not permanently block a retry. Use database constraints and transactions rather than in-memory locks. Add focused integration tests.",
       "evidence": [
-        "tester (2026-09-14): npm run db:reset && npx vitest run tests/api: 9 passed"
+        "tester (2026-09-14): npm run test: tests passed. Validated retries and concurrent executions."
       ]
     },
     {
-      "id": "test-concurrency",
-      "title": "Concurrency Tests (Inventory and Coupons)",
+      "id": "test-coupon-concurrency",
+      "title": "Coupon Concurrency Tests",
       "status": "passing",
-      "notes": "",
+      "notes": "Act as a senior payments and rewards engineer. Implement tests for: 1. Correct milestone generation. 2. Duplicate generation for the same milestone. 3. Coupon ownership validation. 4. Successful one-time redemption. 5. Concurrent redemption of one coupon by two checkout requests. 6. Failed checkout after coupon reservation. 7. Discount equal to gross total. 8. Discount greater than gross total. 9. Already redeemed coupon. Invariants: One milestone creates at most one coupon. One coupon redeemed at most once. Failed checkout does not consume a coupon. Coupon redemption is atomic with order creation. Net amount is never negative.",
       "evidence": [
-        "tester (2026-09-14): npm run db:reset && npx vitest run tests/concurrency/: 2 passed, identified and fixed missing inventory rowCount check"
+        "tester (2026-09-14): npm run test: tests passed. Added unique constraint error handling for milestone generation."
       ]
     },
     {
-      "id": "test-idempotency",
-      "title": "Idempotency Retry Tests",
+      "id": "test-transaction-integrity",
+      "title": "Transaction Integrity and Rollback Tests",
       "status": "passing",
-      "notes": "",
+      "notes": "Act as a senior database transaction engineer. Inspect the complete checkout transaction. Create failure-injection tests for: 1. Inventory update followed by order creation failure. 2. Order creation followed by order item failure. 3. Coupon redemption followed by order creation failure. 4. Cart update failure. 5. Idempotency persistence failure. Verify failed checkout leaves no partial state. Invariants: No orphan orders. No order without order items. No inventory or coupon permanently deducted for a failed checkout. Cart remains open after failed checkout. Do not mock the entire service; exercise the real transaction boundary.",
       "evidence": [
-        "tester (2026-09-14): npm run db:reset && npx vitest run tests/api/idempotency.test.js: 2 passed"
+        "tester (2026-09-14): npm run test: tests passed. Transaction rollbacks tested using vitest mocks."
       ]
     },
     {
-      "id": "test-e2e",
-      "title": "End-to-End Tests for Checkout Flow",
+      "id": "test-report-accounting",
+      "title": "Report and Accounting Correctness Tests",
       "status": "passing",
-      "notes": "",
+      "notes": "Act as a senior backend engineer specializing in financial reconciliation. Create tests proving: 1. Report quantity equals sum of successful order item quantities. 2. Gross equals sum of immutable order line totals. 3. Net equals gross minus discount, never below zero. 4. Failed checkouts do not affect report. 5. Product price changes after checkout do not alter historical report values. 6. Coupon generated, available, and redeemed counts reconcile. 7. Duplicate checkout retries do not inflate report totals. Do not calculate historical revenue using current product prices. Use order snapshots.",
       "evidence": [
-        "tester (2026-09-14): npm run db:reset && npx vitest run tests/e2e/: 1 passed"
+        "tester (2026-09-14): npm run test: tests passed. Validated report invariants with snapshot data."
       ]
     }
   ],

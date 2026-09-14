@@ -19,17 +19,25 @@ class AdminService {
       return { generated: false, message: 'All eligible milestones already have generated coupons' };
     }
 
-    const code = `MILESTONE-${nextMilestone}-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
-    const coupon = await Coupon.create({
-      code,
-      discountType,
-      discountValue,
-      milestone: nextMilestone,
-      status: 'available',
-      isActive: true,
-      maxUses: 1, // Optional since we use status available/redeemed
-      currentUses: 0
-    });
+    let coupon;
+    try {
+      const code = `MILESTONE-${nextMilestone}-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
+      coupon = await Coupon.create({
+        code,
+        discountType,
+        discountValue,
+        milestone: nextMilestone,
+        status: 'available',
+        isActive: true,
+        maxUses: 1, // Optional since we use status available/redeemed
+        currentUses: 0
+      });
+    } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        return { generated: false, message: 'Coupon for this milestone is already being generated or exists' };
+      }
+      throw err;
+    }
 
     return { generated: true, coupon };
   }

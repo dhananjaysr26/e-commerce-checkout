@@ -47,7 +47,7 @@ const checkoutHandler = async (event) => {
     status: order.status
   };
 
-  return success(responsePayload, 201);
+  return success({ data: responsePayload }, 201);
 };
 
 // Wrap the handler with Auth and Error handling

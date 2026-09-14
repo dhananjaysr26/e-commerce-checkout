@@ -3,7 +3,8 @@ const { sequelize } = require('../../src/models');
 
 describe('Products API', () => {
   beforeAll(async () => {
-    // Optionally ensure sync or reset
+    const { execSync } = require('child_process');
+    execSync('npm run db:reset', { stdio: 'ignore' });
   });
 
   afterAll(async () => {
