@@ -59,6 +59,51 @@ class CartService {
     return await this.getCart(cartId, userId);
   }
 
+  async updateCartItem(cartId, userId, productId, quantity) {
+    if (quantity <= 0) {
+      throw new AppError('Quantity must be greater than zero', 400, 'INVALID_QUANTITY');
+    }
+
+    const cart = await cartRepository.findCartById(cartId);
+    if (!cart) {
+      throw new AppError('Cart not found', 404, 'CART_NOT_FOUND');
+    }
+    if (cart.userId !== userId) {
+      throw new AppError('Forbidden', 403, 'FORBIDDEN_CART_ACCESS');
+    }
+    if (cart.status !== 'open') {
+      throw new AppError('Cart is no longer active', 400, 'CART_ALREADY_CHECKED_OUT');
+    }
+
+    const existingItem = await cartRepository.findCartItem(cartId, productId);
+    if (!existingItem) {
+      throw new AppError('Item not in cart', 404, 'ITEM_NOT_FOUND');
+    }
+
+    await cartRepository.updateCartItemQuantity(existingItem.id, quantity);
+    return await this.getCart(cartId, userId);
+  }
+
+  async removeCartItem(cartId, userId, productId) {
+    const cart = await cartRepository.findCartById(cartId);
+    if (!cart) {
+      throw new AppError('Cart not found', 404, 'CART_NOT_FOUND');
+    }
+    if (cart.userId !== userId) {
+      throw new AppError('Forbidden', 403, 'FORBIDDEN_CART_ACCESS');
+    }
+    if (cart.status !== 'open') {
+      throw new AppError('Cart is no longer active', 400, 'CART_ALREADY_CHECKED_OUT');
+    }
+
+    const existingItem = await cartRepository.findCartItem(cartId, productId);
+    if (existingItem) {
+      await cartRepository.removeCartItem(existingItem.id);
+    }
+
+    return await this.getCart(cartId, userId);
+  }
+
   _mapToResponse(cart) {
     const items = (cart.CartItems || []).map(item => {
       const product = item.Product || {};

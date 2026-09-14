@@ -42,8 +42,42 @@ const addCartItem = async (event) => {
   return success({ data: cart }, 201);
 };
 
+// Update Cart Item
+const updateCartItem = async (event) => {
+  const userId = event.user.id;
+  const { cartId, productId } = event.pathParameters || {};
+  
+  if (!event.body) {
+    throw new AppError('Request body is required', 400, 'VALIDATION_ERROR');
+  }
+
+  const parsedBody = JSON.parse(event.body);
+  const validatedData = require('../../schemas/cart.schema').updateCartItemSchema.parse(parsedBody);
+
+  const cart = await cartService.updateCartItem(
+    cartId,
+    userId,
+    productId,
+    validatedData.quantity
+  );
+
+  return success({ data: cart }, 200);
+};
+
+// Remove Cart Item
+const removeCartItem = async (event) => {
+  const userId = event.user.id;
+  const { cartId, productId } = event.pathParameters || {};
+  
+  const cart = await cartService.removeCartItem(cartId, userId, productId);
+
+  return success({ data: cart }, 200);
+};
+
 module.exports = {
   getOrCreateCart: withErrorHandler(withAuth(getOrCreateCart)),
   getCart: withErrorHandler(withAuth(getCart)),
   addCartItem: withErrorHandler(withAuth(addCartItem)),
+  updateCartItem: withErrorHandler(withAuth(updateCartItem)),
+  removeCartItem: withErrorHandler(withAuth(removeCartItem)),
 };

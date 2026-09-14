@@ -34,6 +34,7 @@
     "sequelize-cli": "^6.6.5",
     "serverless": "^4.42.0",
     "serverless-offline": "^14.8.2",
+    "sqlite3": "^6.0.1",
     "supertest": "^7.2.2",
     "vitest": "^4.1.11"
   }

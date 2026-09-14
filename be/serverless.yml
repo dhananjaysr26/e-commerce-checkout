@@ -20,7 +20,7 @@ functions:
     handler: src/handlers/checkout/checkout.handler
     events:
       - httpApi:
-          path: /checkout
+          path: /carts/{cartId}/checkout
           method: post
   getProducts:
     handler: src/handlers/products/getProducts.handler
@@ -46,6 +46,30 @@ functions:
       - httpApi:
           path: /carts/{cartId}/items
           method: post
+  updateCartItem:
+    handler: src/handlers/carts/carts.updateCartItem
+    events:
+      - httpApi:
+          path: /carts/{cartId}/items/{productId}
+          method: patch
+  removeCartItem:
+    handler: src/handlers/carts/carts.removeCartItem
+    events:
+      - httpApi:
+          path: /carts/{cartId}/items/{productId}
+          method: delete
+  generateCoupon:
+    handler: src/handlers/admin/admin.generateCoupon
+    events:
+      - httpApi:
+          path: /admin/coupons/generate
+          method: post
+  adminReport:
+    handler: src/handlers/admin/admin.getReport
+    events:
+      - httpApi:
+          path: /admin/report
+          method: get
 
 plugins:
   - serverless-offline

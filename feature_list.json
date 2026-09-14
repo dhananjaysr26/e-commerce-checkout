@@ -1,0 +1,52 @@
+{
+  "features": [
+    {
+      "id": "test-unit",
+      "title": "Unit Tests for Services",
+      "status": "passing",
+      "notes": "",
+      "evidence": [
+        "tester (2026-09-14): npm run test: 27 passed (added unit tests)"
+      ]
+    },
+    {
+      "id": "test-integration",
+      "title": "Integration Tests for API Endpoints",
+      "status": "passing",
+      "notes": "",
+      "evidence": [
+        "tester (2026-09-14): npm run db:reset && npx vitest run tests/api: 9 passed"
+      ]
+    },
+    {
+      "id": "test-concurrency",
+      "title": "Concurrency Tests (Inventory and Coupons)",
+      "status": "passing",
+      "notes": "",
+      "evidence": [
+        "tester (2026-09-14): npm run db:reset && npx vitest run tests/concurrency/: 2 passed, identified and fixed missing inventory rowCount check"
+      ]
+    },
+    {
+      "id": "test-idempotency",
+      "title": "Idempotency Retry Tests",
+      "status": "passing",
+      "notes": "",
+      "evidence": [
+        "tester (2026-09-14): npm run db:reset && npx vitest run tests/api/idempotency.test.js: 2 passed"
+      ]
+    },
+    {
+      "id": "test-e2e",
+      "title": "End-to-End Tests for Checkout Flow",
+      "status": "passing",
+      "notes": "",
+      "evidence": [
+        "tester (2026-09-14): npm run db:reset && npx vitest run tests/e2e/: 1 passed"
+      ]
+    }
+  ],
+  "verification_paths": {
+    "be": "npm test"
+  }
+}

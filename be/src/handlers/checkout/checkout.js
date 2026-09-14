@@ -1,6 +1,5 @@
 const { validateCheckout } = require('../../schemas/checkout.schema');
 const checkoutService = require('../../services/checkout.service');
-const { checkIdempotency, saveIdempotencyResult } = require('../../utils/idempotency');
 const AppError = require('../../errors/AppError');
 const errorCodes = require('../../errors/errorCodes');
 const { ZodError } = require('zod');
@@ -14,11 +13,8 @@ const checkoutHandler = async (event) => {
     throw new AppError('Idempotency key is required in headers', 400, errorCodes.BAD_REQUEST);
   }
 
-  // 1. Check idempotency
-  const existingResult = await checkIdempotency(idempotencyKey);
-  if (existingResult) {
-    return success(existingResult);
-  }
+  const { cartId } = event.pathParameters || {};
+  const userId = event.user.id; // Corrected to event.user.id
 
   // 2. Validate input schema
   let body;
@@ -38,21 +34,18 @@ const checkoutHandler = async (event) => {
     throw e;
   }
 
-  const { cartId, paymentMethodId, couponCode } = data;
-  const userId = event.user.userId; // Provided by withAuth wrapper
+  const { paymentMethodId, couponCode } = data;
+  const requestHash = require('crypto').createHash('sha256').update(JSON.stringify({ cartId, paymentMethodId, couponCode })).digest('hex');
 
   // 3. Process Checkout
-  const order = await checkoutService.processCheckout(userId, cartId, paymentMethodId, couponCode);
+  const order = await checkoutService.processCheckout(userId, cartId, paymentMethodId, couponCode, idempotencyKey, requestHash);
 
   const responsePayload = {
     message: 'Checkout successful',
     orderId: order.id,
-    totalAmount: order.totalAmount,
+    netAmountMinor: order.netAmountMinor,
     status: order.status
   };
-
-  // 4. Save result for idempotency
-  await saveIdempotencyResult(idempotencyKey, responsePayload);
 
   return success(responsePayload, 201);
 };

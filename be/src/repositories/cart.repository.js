@@ -50,6 +50,10 @@ class CartRepository {
   async updateCartItemQuantity(cartItemId, quantity) {
     await CartItem.update({ quantity }, { where: { id: cartItemId } });
   }
+
+  async removeCartItem(cartItemId) {
+    await CartItem.destroy({ where: { id: cartItemId } });
+  }
 }
 
 module.exports = new CartRepository();
