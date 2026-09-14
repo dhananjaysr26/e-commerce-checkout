@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce Checkout API
+  version: 1.0.0
+  description: API for handling checkouts, inventory, and rewards.
+servers:
+  - url: http://localhost:8000
+    description: Local dev server
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /checkout:
+    post:
+      summary: Process a checkout
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: x-idempotency-key
+          schema:
+            type: string
+          required: true
+          description: Unique key to prevent double charges.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cartId
+                - paymentMethodId
+              properties:
+                cartId:
+                  type: string
+                  format: uuid
+                paymentMethodId:
+                  type: string
+                couponCode:
+                  type: string
+      responses:
+        '201':
+          description: Checkout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  orderId:
+                    type: string
+                  totalAmount:
+                    type: integer
+                  status:
+                    type: string
+        '400':
+          description: Bad request (validation, etc.)
+        '401':
+          description: Unauthorized
+        '409':
+          description: Conflict (inventory or concurrency)
+  /products:
+    get:
+      summary: List all products
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        unitPriceMinor:
+                          type: integer
+                        currency:
+                          type: string
+                        inventory:
+                          type: integer
+  /carts:
+    post:
+      summary: Get or create active cart for user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cart'
+  /carts/{cartId}:
+    get:
+      summary: Get a specific cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: cartId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cart'
+  /carts/{cartId}/items:
+    post:
+      summary: Add an item to the cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: cartId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - quantity
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '201':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cart'
+components:
+  schemas:
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+                format: uuid
+              name:
+                type: string
+              quantity:
+                type: integer
+              unitPriceMinor:
+                type: integer
+              lineTotalMinor:
+                type: integer
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

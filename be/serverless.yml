@@ -1,0 +1,55 @@
+service: ecommerce-checkout-rewards
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    POSTGRES_USER: ${env:POSTGRES_USER, 'root'}
+    POSTGRES_PASSWORD: ${env:POSTGRES_PASSWORD, 'pass@123'}
+    POSTGRES_DB: ${env:POSTGRES_DB, 'ecommerce'}
+    JWT_SECRET: ${env:JWT_SECRET, 'supersecret'}
+
+  httpApi:
+    cors: true
+
+functions:
+  checkout:
+    handler: src/handlers/checkout/checkout.handler
+    events:
+      - httpApi:
+          path: /checkout
+          method: post
+  getProducts:
+    handler: src/handlers/products/getProducts.handler
+    events:
+      - httpApi:
+          path: /products
+          method: get
+  getOrCreateCart:
+    handler: src/handlers/carts/carts.getOrCreateCart
+    events:
+      - httpApi:
+          path: /carts
+          method: post
+  getCart:
+    handler: src/handlers/carts/carts.getCart
+    events:
+      - httpApi:
+          path: /carts/{cartId}
+          method: get
+  addCartItem:
+    handler: src/handlers/carts/carts.addCartItem
+    events:
+      - httpApi:
+          path: /carts/{cartId}/items
+          method: post
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 8000
